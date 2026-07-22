@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OC部個人進捗リスト</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #e8f5f7 0%, #f0f9ff 50%, #e8f2ff 100%);
+            min-height: 100vh;
+            padding: 48px 24px;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 48px;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            font-weight: 800;
+            background: linear-gradient(90deg, #00a8cc, #00d4ff, #00c9a7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+        }
+
+        .character {
+            width: 160px;
+            height: 160px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 182, 212, 0.2);
+        }
+
+        .character img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0, 152, 204, 0.2));
+            animation: float 3s ease-in-out infinite;
+            background: transparent;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .last-update {
+            font-size: 0.9em;
+            color: #64748b;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 172, 193, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(0, 172, 193, 0.1);
+        }
+
+        .chart-card:hover {
+            border-color: rgba(0, 172, 193, 0.6);
+            box-shadow: 0 20px 60px rgba(0, 172, 193, 0.2);
+            transform: translateY(-8px);
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #0f5461;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chart-title::before {
+            content: '';
+            width: 6px;
+            height: 24px;
+            background: linear-gradient(180deg, #00d4ff 0%, #0099ff 100%);
+            border-radius: 3px;
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .bar-label {
+            width: 100px;
+            font-weight: 700;
+            color: #0f5461;
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bar-label img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(0, 212, 255, 0.5);
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 48px;
+            background: rgba(0, 172, 193, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(0, 172, 193, 0.2);
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 16px;
+            font-weight: 700;
+            font-size: 0.9em;
+            color: white;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .bar-fill.cyan {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .bar-fill.blue {
+            background: linear-gradient(90deg, #8b5cf6, #d946ef);
+        }
+
+        .bar-fill.purple {
+            background: linear-gradient(90deg, #eab308, #facc15);
+        }
+
+        .bar-fill.green {
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 100px 40px;
+            font-size: 1.2em;
+            color: #64748b;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chart-card {
+            animation: slideIn 0.6s ease-out forwards;
+        }
+
+        .chart-card:nth-child(1) { animation-delay: 0.1s; }
+        .chart-card:nth-child(2) { animation-delay: 0.2s; }
+        .chart-card:nth-child(3) { animation-delay: 0.3s; }
+        .chart-card:nth-child(4) { animation-delay: 0.4s; }
+        .chart-card:nth-child(5) { animation-delay: 0.5s; }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .chart-card {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="character">
+                <img src="./イラスト/ほっこりリナさん.png" alt="OC部キャラクター">
+            </div>
+            <div class="header-content">
+                <h1>📊 OC部個人進捗リスト</h1>
+                <div class="last-update">最終更新: <span id="updateTime">-</span></div>
+            </div>
+        </div>
+        <div id="content"></div>
+    </div>
+
+    <script>
+        const SHEET_ID = '18hYazQBVk3C7h2E3Nh8P4ZRpN7QZ2wGSVqYn9hWufg0';
+
+        const KPI_DATA = {
+            '電話LT率': { '岩田': '100.0', '山橋': '83.3', '田村': '77.8', '南鶴': '70.0' },
+            'メールLT率': { '岩田': '100.0', '山橋': '41.7', '田村': '66.7', '南鶴': '42.9' },
+            'LT件数': { '岩田': '4', '山橋': '15', '田村': '13', '南鶴': '24' },
+            '受電数': { '岩田': '3', '山橋': '12', '田村': '13', '南鶴': '9' },
+            'メール処理件数': { '岩田': '25', '山橋': '110', '田村': '137', '南鶴': '48' }
+        };
+
+        const COLORS = ['cyan', 'blue', 'purple', 'green'];
+        const PEOPLE = ['岩田', '山橋', '田村', '南鶴'];
+        const MEMBER_IMAGES = {
+            '岩田': './イラスト/岩田R.png',
+            '山橋': './イラスト/山橋さん.png',
+            '田村': './イラスト/R田村.png',
+            '南鶴': './イラスト/南鶴.png'
+        };
+
+        function renderDashboard(data) {
+            const content = document.getElementById('content');
+            content.innerHTML = '';
+
+            const grid = document.createElement('div');
+            grid.className = 'charts-grid';
+
+            for (const [kpiName, values] of Object.entries(data)) {
+                const card = document.createElement('div');
+                card.className = 'chart-card';
+
+                const title = document.createElement('div');
+                title.className = 'chart-title';
+                title.textContent = kpiName;
+                card.appendChild(title);
+
+                const barChart = document.createElement('div');
+                barChart.className = 'bar-chart';
+
+                const isPercentage = kpiName.includes('率');
+                const max = isPercentage ? 100 : Math.max(...PEOPLE.map(p => parseFloat(values[p])));
+
+                PEOPLE.forEach((person, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'bar-item';
+
+                    const label = document.createElement('div');
+                    label.className = 'bar-label';
+
+                    // イラストを追加
+                    const img = document.createElement('img');
+                    img.src = MEMBER_IMAGES[person];
+                    img.alt = person;
+                    label.appendChild(img);
+
+                    // テキスト部分
+                    const textSpan = document.createElement('span');
+
+                    // 最高値の人に王冠をつける
+                    const allValues = PEOPLE.map(p => parseFloat(values[p]));
+                    const maxValue = Math.max(...allValues);
+                    const currentValue = parseFloat(values[person]);
+
+                    if (currentValue === maxValue) {
+                        textSpan.textContent = person + ' 👑';
+                    } else {
+                        textSpan.textContent = person;
+                    }
+
+                    label.appendChild(textSpan);
+
+                    const container = document.createElement('div');
+                    container.className = 'bar-container';
+
+                    const fill = document.createElement('div');
+                    fill.className = `bar-fill ${COLORS[idx]}`;
+
+                    const value = parseFloat(values[person]);
+                    const percentage = (value / max) * 100;
+
+                    setTimeout(() => {
+                        fill.style.width = percentage + '%';
+                    }, 100 + idx * 50);
+
+                    const text = document.createElement('span');
+                    text.textContent = isPercentage ? value.toFixed(1) + '%' : value;
+                    fill.appendChild(text);
+
+                    container.appendChild(fill);
+                    item.appendChild(label);
+                    item.appendChild(container);
+                    barChart.appendChild(item);
+                });
+
+                card.appendChild(barChart);
+                grid.appendChild(card);
+            }
+
+            content.appendChild(grid);
+            updateTimestamp();
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            const timeStr = now.toLocaleString('ja-JP');
+            document.getElementById('updateTime').textContent = timeStr;
+        }
+
+        function init() {
+            renderDashboard(KPI_DATA);
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
