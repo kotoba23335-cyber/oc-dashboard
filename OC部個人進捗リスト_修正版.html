@@ -805,18 +805,8 @@
 
                     characterSection.appendChild(container);
 
-                    // ページが読み込まれた後にヘッダーに追加
-                    setTimeout(() => {
-                        const header = document.querySelector('.header');
-                        if (header) {
-                            // 既存のheader-charactersがあれば削除
-                            const existing = header.querySelector('.header-characters');
-                            if (existing) {
-                                existing.remove();
-                            }
-                            header.appendChild(characterSection);
-                        }
-                    }, 100);
+                    // イラストをヘッダーに追加しない（削除済み）
+                    // header.appendChild(characterSection);
                 }
             }
 
