@@ -405,6 +405,10 @@
             </div>
         </div>
         <div id="content"></div>
+        <div class="character-section">
+            <h2>✨ みんなの成長ストーリー ✨</h2>
+            <div id="characterContainer" class="full-body-characters"></div>
+        </div>
     </div>
 
     <script>
@@ -738,15 +742,11 @@
                 });
 
                 card.appendChild(barChart);
-
-                // KPI下のイラスト行を追加
-                const illustrationRow = createKPIIllustrationRow(values);
-                card.appendChild(illustrationRow);
-
                 grid.appendChild(card);
             }
 
             content.appendChild(grid);
+            renderCharacterSection(data);
             updateTimestamp();
         }
 
