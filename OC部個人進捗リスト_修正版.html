@@ -30,7 +30,7 @@
         .header {
             margin-bottom: 48px;
             display: flex;
-            align-items: center;
+            align-items: flex-end;
             justify-content: space-between;
             gap: 32px;
         }
@@ -802,11 +802,13 @@
 
                     characterSection.appendChild(container);
 
-                    // ヘッダーに追加
-                    const header = document.querySelector('.header');
-                    if (header) {
-                        header.appendChild(characterSection);
-                    }
+                    // ページが読み込まれた後にヘッダーに追加
+                    setTimeout(() => {
+                        const header = document.querySelector('.header');
+                        if (header) {
+                            header.appendChild(characterSection);
+                        }
+                    }, 100);
                 }
             }
 
