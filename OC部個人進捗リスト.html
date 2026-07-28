@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OC部個人進捗リスト</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #e8f5f7 0%, #f0f9ff 50%, #e8f2ff 100%);
+            min-height: 100vh;
+            padding: 48px 24px;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 48px;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            font-weight: 800;
+            background: linear-gradient(90deg, #00a8cc, #00d4ff, #00c9a7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+        }
+
+        .last-update {
+            font-size: 0.9em;
+            color: #4a7c7e;
+        }
+
+        .character {
+            width: 160px;
+            height: 160px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 182, 212, 0.2);
+        }
+
+        .character img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0, 152, 204, 0.2));
+            animation: float 3s ease-in-out infinite;
+            background: transparent;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 172, 193, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(0, 172, 193, 0.1);
+        }
+
+        .chart-card:hover {
+            border-color: rgba(0, 172, 193, 0.6);
+            box-shadow: 0 20px 60px rgba(0, 172, 193, 0.2);
+            transform: translateY(-8px);
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #0f5461;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chart-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, #06b6d4 0%, #3b82f6 100%);
+            border-radius: 2px;
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: relative;
+        }
+
+        .bar-label {
+            width: 100px;
+            font-weight: 700;
+            color: #0f5461;
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .crown {
+            font-size: 1.2em;
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .bar-label img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(0, 212, 255, 0.5);
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 48px;
+            background: rgba(0, 172, 193, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(0, 172, 193, 0.2);
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 16px;
+            font-weight: 700;
+            font-size: 0.9em;
+            color: white;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .bar-fill.cyan {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .bar-fill.blue {
+            background: linear-gradient(90deg, #8b5cf6, #d946ef);
+        }
+
+        .bar-fill.purple {
+            background: linear-gradient(90deg, #eab308, #facc15);
+        }
+
+        .bar-fill.green {
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+        }
+
+        /* 全身イラストセクション */
+        .character-section {
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(0, 172, 193, 0.3);
+            border-radius: 30px;
+            padding: 60px 40px;
+            backdrop-filter: blur(20px);
+            text-align: center;
+            margin-top: 48px;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        .character-section h2 {
+            font-size: 1.8em;
+            font-weight: 800;
+            color: #0f5461;
+            margin-bottom: 48px;
+            background: linear-gradient(90deg, #ff6b9d, #c44569);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .full-body-characters {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .character-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            animation: slideIn 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .character-card:nth-child(1) { animation-delay: 0.2s; }
+        .character-card:nth-child(2) { animation-delay: 0.4s; }
+        .character-card:nth-child(3) { animation-delay: 0.6s; }
+        .character-card:nth-child(4) { animation-delay: 0.8s; }
+
+        .character-container {
+            position: relative;
+            width: 150px;
+            height: 200px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .face-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 4px 8px rgba(0, 152, 204, 0.15));
+        }
+
+        .costume-svg {
+            position: absolute;
+            width: 180px;
+            height: 240px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -45%);
+            filter: drop-shadow(0 6px 12px rgba(0, 152, 204, 0.15));
+            transition: transform 0.3s ease, filter 0.3s ease;
+            z-index: 1;
+        }
+
+        .character-card:hover .costume-svg {
+            transform: translate(-50%, -50%) scale(1.08);
+            filter: drop-shadow(0 10px 20px rgba(0, 152, 204, 0.3));
+        }
+
+        .character-name {
+            font-weight: 800;
+            font-size: 1.1em;
+            color: #0f5461;
+            margin-bottom: 8px;
+        }
+
+        .costume-level {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 700;
+            color: white;
+        }
+
+        .level-1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .level-2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .level-3 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .level-4 {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 80px 40px;
+            font-size: 1.1em;
+            color: #4a7c7e;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chart-card {
+            animation: slideIn 0.6s ease-out forwards;
+        }
+
+        .chart-card:nth-child(1) { animation-delay: 0.1s; }
+        .chart-card:nth-child(2) { animation-delay: 0.2s; }
+        .chart-card:nth-child(3) { animation-delay: 0.3s; }
+        .chart-card:nth-child(4) { animation-delay: 0.4s; }
+        .chart-card:nth-child(5) { animation-delay: 0.5s; }
+        .chart-card:nth-child(6) { animation-delay: 0.6s; }
+
+        /* イラスト行スタイル */
+        .kpi-illustration-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(0, 172, 193, 0.2);
+        }
+
+        .kpi-illustration {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .kpi-illustration-img {
+            width: 80px;
+            height: 100px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: transparent;
+            padding: 4px;
+            transition: transform 0.3s ease;
+        }
+
+        .kpi-illustration:hover .kpi-illustration-img {
+            transform: scale(1.1);
+        }
+
+        .kpi-member-name {
+            font-size: 0.85em;
+            font-weight: 700;
+            color: #0f5461;
+        }
+
+        .crown-count {
+            font-size: 0.9em;
+            color: #ffd700;
+            font-weight: 600;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="character">
+                <img src="https://cdn.jsdelivr.net/gh/kotoba23335-cyber/oc-dashboard@main/ほっこりリナさん.png" alt="OC部キャラクター">
+            </div>
+            <div class="header-content">
+                <h1 id="pageTitle">📊 7月OC部個人進捗リスト</h1>
+                <div class="last-update">最終更新: <span id="updateTime">-</span></div>
+            </div>
+        </div>
+        <div id="content"></div>
+    </div>
+
+    <script>
+        const SHEET_ID = '18hYazQBVk3C7h2E3Nh8P4ZRpN7QZ2wGSVqYn9hWufg0';
+        const GID = '1628984561';
+        const COLORS = ['cyan', 'blue', 'purple', 'green'];
+        const PEOPLE = ['岩田', '山橋', '田村', '南鶴'];
+        const MEMBER_IMAGES = {
+            '岩田': 'https://cdn.jsdelivr.net/gh/kotoba23335-cyber/oc-dashboard@main/岩田R.png',
+            '山橋': 'https://cdn.jsdelivr.net/gh/kotoba23335-cyber/oc-dashboard@main/山橋さん.png',
+            '田村': 'https://cdn.jsdelivr.net/gh/kotoba23335-cyber/oc-dashboard@main/R田村.png',
+            '南鶴': 'https://cdn.jsdelivr.net/gh/kotoba23335-cyber/oc-dashboard@main/南鶴.png'
+        };
+
+        const KPI_ROWS = {
+            '電話LT率': 6,
+            'メールLT率': 15,
+            'LT件数': 24,
+            '受電数': 33,
+            'メール処理件数': 42,
+            'コメント返信率': 51
+        };
+
+        let currentData = null;
+
+        async function fetchSheetData() {
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+
+            try {
+                const response = await fetch(csvUrl);
+                if (!response.ok) throw new Error('データ取得失敗');
+
+                const csv = await response.text();
+                return parseCSV(csv);
+            } catch (error) {
+                console.error('エラー:', error);
+                return null;
+            }
+        }
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n').filter(line => line.trim());
+            const data = {};
+
+            for (const [kpiName, rowIndex] of Object.entries(KPI_ROWS)) {
+                data[kpiName] = {};
+
+                PEOPLE.forEach((person, idx) => {
+                    const lineIndex = rowIndex + idx;
+                    if (lineIndex < lines.length) {
+                        const row = lines[lineIndex].split(',');
+                        const value = row[2]?.trim() || '0';
+                        data[kpiName][person] = value;
+                    }
+                });
+            }
+
+            return data;
+        }
+
+        function calculateCharacterLevels(data) {
+            const scores = {
+                '岩田': 0,
+                '山橋': 0,
+                '田村': 0,
+                '南鶴': 0
+            };
+
+            // 各KPIでランキングを計算
+            for (const kpiName in data) {
+                const values = Object.entries(data[kpiName])
+                    .map(([person, val]) => ({ person, value: parseFloat(val) }))
+                    .sort((a, b) => b.value - a.value);
+
+                // ランキングをポイント化（1位=3pt、2位=2pt、3位=1pt、4位=0pt）
+                values.forEach((item, idx) => {
+                    const points = Math.max(0, 3 - idx);
+                    scores[item.person] += points;
+                });
+            }
+
+            // スコアをレベルに変換
+            const sorted = Object.entries(scores)
+                .sort((a, b) => b[1] - a[1])
+                .map(([person, score], idx) => ({
+                    person,
+                    score,
+                    level: idx + 1 // 1位=レベル1（豪華）、4位=レベル4（シンプル）
+                }));
+
+            return sorted.reduce((acc, item) => {
+                acc[item.person] = { level: item.level, score: item.score };
+                return acc;
+            }, {});
+        }
+
+        // SVGでコスチューム部分のみを描画
+        function createCostumeSVG(level) {
+            const costumeStyles = {
+                1: { // プリンセスドレス
+                    bodyColor: '#ff69b4',
+                    skirtColor: '#ffc0cb',
+                    trimColor: '#ffd700',
+                    hasSparkles: true,
+                    hasCrown: true
+                },
+                2: { // キュートなドレス
+                    bodyColor: '#ff99cc',
+                    skirtColor: '#ffb3d9',
+                    trimColor: '#ff69b4',
+                    hasSparkles: false,
+                    hasCrown: false
+                },
+                3: { // リボン付きカジュアル
+                    bodyColor: '#87ceeb',
+                    skirtColor: '#e0f6ff',
+                    trimColor: '#4db8ff',
+                    hasSparkles: false,
+                    hasCrown: false
+                },
+                4: { // 普通の学生服
+                    bodyColor: '#ffffff',
+                    skirtColor: '#333333',
+                    trimColor: '#666666',
+                    hasSparkles: false,
+                    hasCrown: false
+                }
+            };
+
+            const style = costumeStyles[level];
+            let svg = `<svg viewBox="0 0 100 160" xmlns="http://www.w3.org/2000/svg">`;
+
+            svg += `<defs>
+                <linearGradient id="bodyGrad${level}" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:${style.bodyColor};stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:${lightenColor(style.bodyColor, 15)};stop-opacity:1" />
+                </linearGradient>
+            </defs>`;
+
+            // 肩の部分（ドレス上部）
+            svg += `<ellipse cx="50" cy="40" rx="24" ry="18" fill="url(#bodyGrad${level})"/>`;
+
+            // 装飾バンド
+            if (level <= 2) {
+                svg += `<path d="M 28 48 Q 50 52 72 48" stroke="${style.trimColor}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+            }
+
+            // スカート
+            svg += `<path d="M 32 55 L 22 140 L 28 145 L 38 75 L 50 72 L 62 75 L 72 145 L 78 140 L 68 55 Z"
+                    fill="${style.skirtColor}" stroke="${style.trimColor}" stroke-width="0.5"/>`;
+
+            // スカート下部の装飾
+            if (level === 1) {
+                // フリルの装飾
+                svg += `<path d="M 26 110 Q 24 120 26 135" stroke="${style.trimColor}" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8"/>
+                        <path d="M 36 100 Q 34 115 36 130" stroke="${style.trimColor}" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+                        <path d="M 64 100 Q 66 115 64 130" stroke="${style.trimColor}" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+                        <path d="M 74 110 Q 76 120 74 135" stroke="${style.trimColor}" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8"/>`;
+            }
+
+            // リボン/アクセサリー
+            if (level === 1) {
+                // 王冠
+                svg += `<g transform="translate(50, 10)">
+                    <path d="M -20 8 L -12 2 L -6 10 L 0 0 L 6 10 L 12 2 L 20 8"
+                          stroke="${style.trimColor}" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+                    <circle cx="-12" cy="3" r="1.2" fill="${style.trimColor}"/>
+                    <circle cx="0" cy="0" r="1.2" fill="${style.trimColor}"/>
+                    <circle cx="12" cy="3" r="1.2" fill="${style.trimColor}"/>
+                </g>`;
+            } else if (level === 2) {
+                // 大きなリボン
+                svg += `<path d="M 40 18 L 40 32 L 45 25 L 50 28 L 55 25 L 60 32 L 60 18 Z"
+                        fill="${style.trimColor}" opacity="0.85"/>`;
+            } else if (level === 3) {
+                // 小さなリボン
+                svg += `<circle cx="43" cy="22" r="2.5" fill="${style.trimColor}"/>
+                        <circle cx="57" cy="22" r="2.5" fill="${style.trimColor}"/>
+                        <path d="M 43 22 L 50 24 L 57 22" stroke="${style.trimColor}" stroke-width="1" fill="none" opacity="0.8"/>`;
+            }
+
+            // キラキラ効果
+            if (style.hasSparkles) {
+                svg += `<circle cx="30" cy="55" r="1.2" fill="#ffd700" opacity="0.8"/>
+                        <circle cx="70" cy="55" r="1.2" fill="#ffd700" opacity="0.8"/>
+                        <circle cx="36" cy="85" r="0.8" fill="#ffd700" opacity="0.6"/>
+                        <circle cx="64" cy="90" r="0.8" fill="#ffd700" opacity="0.6"/>
+                        <circle cx="50" cy="120" r="0.8" fill="#ffd700" opacity="0.5"/>`;
+            }
+
+            svg += `</svg>`;
+            return svg;
+        }
+
+        function lightenColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, (num >> 16) + amt);
+            const G = Math.min(255, (num >> 8 & 0x00FF) + amt);
+            const B = Math.min(255, (num & 0x0000FF) + amt);
+            return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+        }
+
+        function renderCharacterSection(data) {
+            const levels = calculateCharacterLevels(data);
+            const container = document.getElementById('characterContainer');
+            container.innerHTML = '';
+
+            const levelLabels = {
+                1: '👑 プリンセス',
+                2: '💕 キュート',
+                3: '⭐ スター',
+                4: '🌟 スマイル'
+            };
+
+            PEOPLE.forEach(person => {
+                const { level } = levels[person];
+                const card = document.createElement('div');
+                card.className = 'character-card';
+
+                // コンテナ
+                const characterContainer = document.createElement('div');
+                characterContainer.className = 'character-container';
+
+                // コスチュームSVG
+                const costumeSvgHtml = createCostumeSVG(level);
+                const costumeSvgDiv = document.createElement('div');
+                costumeSvgDiv.innerHTML = costumeSvgHtml;
+                const costumeSvg = costumeSvgDiv.querySelector('svg');
+                costumeSvg.classList.add('costume-svg');
+                characterContainer.appendChild(costumeSvg);
+
+                // 顔画像
+                const faceImg = document.createElement('img');
+                faceImg.src = MEMBER_IMAGES[person];
+                faceImg.alt = person;
+                faceImg.className = 'face-img';
+                characterContainer.appendChild(faceImg);
+
+                card.appendChild(characterContainer);
+
+                const name = document.createElement('div');
+                name.className = 'character-name';
+                name.textContent = person;
+                card.appendChild(name);
+
+                const costumeLabel = document.createElement('div');
+                costumeLabel.className = `costume-level level-${level}`;
+                costumeLabel.textContent = levelLabels[level];
+                card.appendChild(costumeLabel);
+
+                container.appendChild(card);
+            });
+        }
+
+        function renderDashboard(data) {
+            if (!data) {
+                document.getElementById('content').innerHTML = '<div class="loading">📍 データを取得できません</div>';
+                return;
+            }
+
+            currentData = data;
+
+            const content = document.getElementById('content');
+            content.innerHTML = '';
+
+            const grid = document.createElement('div');
+            grid.className = 'charts-grid';
+
+            for (const [kpiName, values] of Object.entries(data)) {
+                const card = document.createElement('div');
+                card.className = 'chart-card';
+
+                const title = document.createElement('div');
+                title.className = 'chart-title';
+                title.textContent = kpiName;
+                card.appendChild(title);
+
+                const barChart = document.createElement('div');
+                barChart.className = 'bar-chart';
+
+                const isPercentage = kpiName.includes('率');
+                const numValues = PEOPLE.map(p => parseFloat(values[p]));
+                const maxValue = Math.max(...numValues);
+
+                PEOPLE.forEach((person, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'bar-item';
+
+                    const label = document.createElement('div');
+                    label.className = 'bar-label';
+
+                    const img = document.createElement('img');
+                    img.src = MEMBER_IMAGES[person];
+                    img.alt = person;
+                    label.appendChild(img);
+
+                    const textSpan = document.createElement('span');
+                    const currentValue = parseFloat(values[person]);
+
+                    if (currentValue === maxValue && maxValue > 0) {
+                        const crown = document.createElement('div');
+                        crown.className = 'crown';
+                        crown.textContent = '👑';
+                        label.appendChild(crown);
+                    }
+
+                    textSpan.textContent = person;
+                    label.appendChild(textSpan);
+                    item.appendChild(label);
+
+                    const container = document.createElement('div');
+                    container.className = 'bar-container';
+
+                    const fill = document.createElement('div');
+                    fill.className = `bar-fill ${COLORS[idx]}`;
+
+                    const percentage = (currentValue / maxValue) * 100;
+
+                    setTimeout(() => {
+                        fill.style.width = percentage + '%';
+                    }, 100 + idx * 50);
+
+                    const text = document.createElement('span');
+                    text.textContent = isPercentage ? currentValue.toFixed(1) + '%' : currentValue;
+                    fill.appendChild(text);
+
+                    container.appendChild(fill);
+                    item.appendChild(container);
+                    barChart.appendChild(item);
+                });
+
+                card.appendChild(barChart);
+
+                // KPI下のイラスト行を追加
+                const illustrationRow = createKPIIllustrationRow(values);
+                card.appendChild(illustrationRow);
+
+                grid.appendChild(card);
+            }
+
+            content.appendChild(grid);
+            updateTimestamp();
+        }
+
+        function createKPIIllustrationRow(kpiValues) {
+            const row = document.createElement('div');
+            row.className = 'kpi-illustration-row';
+
+            // 各人のランキングを計算
+            const rankings = PEOPLE.map((person, idx) => ({
+                person,
+                value: parseFloat(kpiValues[person]),
+                originalIdx: idx
+            })).sort((a, b) => b.value - a.value);
+
+            // ランキング順に王冠数を付与
+            const crownCounts = {};
+            rankings.forEach((item, rankIdx) => {
+                // 1位=3個、2位=2個、3位=1個、4位=0個
+                crownCounts[item.person] = Math.max(0, 3 - rankIdx);
+            });
+
+            // 元の順序（岩田、山橋、田村、南鶴）で表示
+            PEOPLE.forEach(person => {
+                const crowns = crownCounts[person];
+                // 0=1, 1=2, 2=3, 3=4（ユニクロから順に）
+                const costumeNum = crowns + 1;
+
+                const illustration = document.createElement('div');
+                illustration.className = 'kpi-illustration';
+
+                const img = document.createElement('img');
+                img.className = 'kpi-illustration-img';
+
+                // ファイル名マッピング
+                const fileNameMap = {
+                    '岩田': 'iwata',
+                    '山橋': 'yamahashi',
+                    '田村': 'madoka',
+                    '南鶴': 'minamitsuru'
+                };
+
+                const baseName = fileNameMap[person];
+                img.src = `https://cdn.jsdelivr.net/gh/kotoba23335-cyber/oc-dashboard@main/${baseName}${costumeNum}.png`;
+                img.alt = person;
+
+                illustration.appendChild(img);
+
+                const nameLabel = document.createElement('div');
+                nameLabel.className = 'kpi-member-name';
+                nameLabel.textContent = person;
+                illustration.appendChild(nameLabel);
+
+                const crownDisplay = document.createElement('div');
+                crownDisplay.className = 'crown-count';
+                if (crowns > 0) {
+                    crownDisplay.textContent = '👑'.repeat(crowns);
+                } else {
+                    crownDisplay.textContent = '';
+                }
+                illustration.appendChild(crownDisplay);
+
+                row.appendChild(illustration);
+            });
+
+            return row;
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            const timeStr = now.toLocaleString('ja-JP');
+            document.getElementById('updateTime').textContent = timeStr;
+        }
+
+        async function init() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">📍 ダッシュボード読み込み中...</div>';
+
+            const data = await fetchSheetData();
+            renderDashboard(data);
+        }
+
+        init();
+        setInterval(init, 30000);
+    </script>
+</body>
+</html>
