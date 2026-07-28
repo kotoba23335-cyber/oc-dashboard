@@ -136,6 +136,7 @@
             color: #0f5461;
             font-size: 0.95em;
             display: flex;
+            flex-direction: column;
             align-items: center;
             gap: 8px;
             position: relative;
@@ -143,10 +144,10 @@
 
         .crown {
             font-size: 1.2em;
-            position: absolute;
-            top: -32px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: relative;
+            top: 0;
+            left: 0;
+            transform: none;
         }
 
         .bar-label img {
@@ -466,39 +467,35 @@
         }
 
         function calculateCharacterLevels(data) {
-            const scores = {
+            const firstPlaceCount = {
                 '岩田': 0,
                 '山橋': 0,
                 '田村': 0,
                 '南鶴': 0
             };
 
-            // 各KPIでランキングを計算
+            // 各KPIで1位をとった数をカウント
             for (const kpiName in data) {
                 const values = Object.entries(data[kpiName])
                     .map(([person, val]) => ({ person, value: parseFloat(val) }))
                     .sort((a, b) => b.value - a.value);
 
-                // ランキングをポイント化（1位=3pt、2位=2pt、3位=1pt、4位=0pt）
-                values.forEach((item, idx) => {
-                    const points = Math.max(0, 3 - idx);
-                    scores[item.person] += points;
-                });
+                // 1位の人のカウントを増やす
+                if (values.length > 0 && values[0].value > 0) {
+                    firstPlaceCount[values[0].person]++;
+                }
             }
 
-            // スコアをレベルに変換
-            const sorted = Object.entries(scores)
-                .sort((a, b) => b[1] - a[1])
-                .map(([person, score], idx) => ({
-                    person,
-                    score,
-                    level: idx + 1 // 1位=レベル1（豪華）、4位=レベル4（シンプル）
-                }));
+            // 1位をとった数でレベルを決定（0個→1、1個→2、2個→3、3個→4）
+            const result = {};
+            PEOPLE.forEach(person => {
+                result[person] = {
+                    level: Math.min(4, firstPlaceCount[person] + 1),
+                    firstPlaces: firstPlaceCount[person]
+                };
+            });
 
-            return sorted.reduce((acc, item) => {
-                acc[item.person] = { level: item.level, score: item.score };
-                return acc;
-            }, {});
+            return result;
         }
 
         // SVGでコスチューム部分のみを描画
@@ -613,15 +610,15 @@
             const container = document.getElementById('characterContainer');
             container.innerHTML = '';
 
-            const levelLabels = {
-                1: '👑 プリンセス',
-                2: '💕 キュート',
-                3: '⭐ スター',
-                4: '🌟 スマイル'
+            const fileNameMap = {
+                '岩田': 'iwata',
+                '山橋': 'yamahashi',
+                '田村': 'madoka',
+                '南鶴': 'minamitsuru'
             };
 
             PEOPLE.forEach(person => {
-                const { level } = levels[person];
+                const { level, firstPlaces } = levels[person];
                 const card = document.createElement('div');
                 card.className = 'character-card';
 
@@ -629,20 +626,13 @@
                 const characterContainer = document.createElement('div');
                 characterContainer.className = 'character-container';
 
-                // コスチュームSVG
-                const costumeSvgHtml = createCostumeSVG(level);
-                const costumeSvgDiv = document.createElement('div');
-                costumeSvgDiv.innerHTML = costumeSvgHtml;
-                const costumeSvg = costumeSvgDiv.querySelector('svg');
-                costumeSvg.classList.add('costume-svg');
-                characterContainer.appendChild(costumeSvg);
-
-                // 顔画像
-                const faceImg = document.createElement('img');
-                faceImg.src = MEMBER_IMAGES[person];
-                faceImg.alt = person;
-                faceImg.className = 'face-img';
-                characterContainer.appendChild(faceImg);
+                // イラスト（1位をとった数に応じて変更）
+                const baseName = fileNameMap[person];
+                const illustrationImg = document.createElement('img');
+                illustrationImg.src = `https://cdn.jsdelivr.net/gh/kotoba23335-cyber/oc-dashboard@main/${baseName}${level}.png`;
+                illustrationImg.alt = person;
+                illustrationImg.className = 'face-img';
+                characterContainer.appendChild(illustrationImg);
 
                 card.appendChild(characterContainer);
 
@@ -651,10 +641,10 @@
                 name.textContent = person;
                 card.appendChild(name);
 
-                const costumeLabel = document.createElement('div');
-                costumeLabel.className = `costume-level level-${level}`;
-                costumeLabel.textContent = levelLabels[level];
-                card.appendChild(costumeLabel);
+                const crownLabel = document.createElement('div');
+                crownLabel.className = 'costume-level';
+                crownLabel.textContent = firstPlaces > 0 ? '👑'.repeat(firstPlaces) : '';
+                card.appendChild(crownLabel);
 
                 container.appendChild(card);
             });
@@ -702,14 +692,9 @@
                     const label = document.createElement('div');
                     label.className = 'bar-label';
 
-                    const img = document.createElement('img');
-                    img.src = MEMBER_IMAGES[person];
-                    img.alt = person;
-                    label.appendChild(img);
-
-                    const textSpan = document.createElement('span');
                     const currentValue = parseFloat(values[person]);
 
+                    // 王冠を最初に追加
                     if (currentValue === maxValue && maxValue > 0) {
                         const crown = document.createElement('div');
                         crown.className = 'crown';
@@ -717,6 +702,12 @@
                         label.appendChild(crown);
                     }
 
+                    const img = document.createElement('img');
+                    img.src = MEMBER_IMAGES[person];
+                    img.alt = person;
+                    label.appendChild(img);
+
+                    const textSpan = document.createElement('span');
                     textSpan.textContent = person;
                     label.appendChild(textSpan);
                     item.appendChild(label);
@@ -751,7 +742,7 @@
                     characterSection.className = 'character-section';
 
                     const heading = document.createElement('h2');
-                    heading.textContent = '✨ みんなの成長ストーリー ✨';
+                    heading.textContent = '✨ 王冠を集めてドレスアップ ✨';
                     characterSection.appendChild(heading);
 
                     const container = document.createElement('div');
@@ -767,26 +758,27 @@
                         4: '🌟 スマイル'
                     };
 
+                    const fileNameMap = {
+                        '岩田': 'iwata',
+                        '山橋': 'yamahashi',
+                        '田村': 'madoka',
+                        '南鶴': 'minamitsuru'
+                    };
+
                     PEOPLE.forEach(person => {
-                        const { level } = levels[person];
+                        const { level, firstPlaces } = levels[person];
                         const card = document.createElement('div');
                         card.className = 'character-card';
 
                         const characterContainer = document.createElement('div');
                         characterContainer.className = 'character-container';
 
-                        const costumeSvgHtml = createCostumeSVG(level);
-                        const costumeSvgDiv = document.createElement('div');
-                        costumeSvgDiv.innerHTML = costumeSvgHtml;
-                        const costumeSvg = costumeSvgDiv.querySelector('svg');
-                        costumeSvg.classList.add('costume-svg');
-                        characterContainer.appendChild(costumeSvg);
-
-                        const faceImg = document.createElement('img');
-                        faceImg.src = MEMBER_IMAGES[person];
-                        faceImg.alt = person;
-                        faceImg.className = 'face-img';
-                        characterContainer.appendChild(faceImg);
+                        const baseName = fileNameMap[person];
+                        const illustrationImg = document.createElement('img');
+                        illustrationImg.src = `https://cdn.jsdelivr.net/gh/kotoba23335-cyber/oc-dashboard@main/${baseName}${level}.png`;
+                        illustrationImg.alt = person;
+                        illustrationImg.className = 'face-img';
+                        characterContainer.appendChild(illustrationImg);
 
                         card.appendChild(characterContainer);
 
@@ -795,10 +787,10 @@
                         name.textContent = person;
                         card.appendChild(name);
 
-                        const costumeLabel = document.createElement('div');
-                        costumeLabel.className = `costume-level level-${level}`;
-                        costumeLabel.textContent = levelLabels[level];
-                        card.appendChild(costumeLabel);
+                        const crownLabel = document.createElement('div');
+                        crownLabel.className = 'costume-level';
+                        crownLabel.textContent = firstPlaces > 0 ? '👑'.repeat(firstPlaces) : '';
+                        card.appendChild(crownLabel);
 
                         container.appendChild(card);
                     });
