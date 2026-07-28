@@ -238,9 +238,8 @@
             display: flex;
             justify-content: center;
             gap: 20px;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             align-items: flex-end;
-            overflow-x: auto;
         }
 
         .character-card {
@@ -805,8 +804,8 @@
 
                     characterSection.appendChild(container);
 
-                    // イラストをヘッダーに追加しない（削除済み）
-                    // header.appendChild(characterSection);
+                    // イラストをグリッドに追加
+                    grid.appendChild(characterSection);
                 }
             }
 
