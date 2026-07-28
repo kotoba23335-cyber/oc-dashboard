@@ -1,0 +1,8 @@
+markdown: kramdown
+exclude:
+  - README.md
+  - .gitignore
+  - .git
+
+# Disable caching
+cache_control: "no-cache"
