@@ -768,7 +768,11 @@
                 // 最後のKPI（コメント返信率）の後にキャラクターセクションを追加
                 if (currentIndex === totalKPIs) {
                     const characterSection = document.createElement('div');
-                    characterSection.className = 'header-characters';
+                    characterSection.className = 'character-section';
+
+                    const heading = document.createElement('h2');
+                    heading.textContent = '✨ 王冠を集めてドレスアップ ✨';
+                    characterSection.appendChild(heading);
 
                     const container = document.createElement('div');
                     container.className = 'full-body-characters';
