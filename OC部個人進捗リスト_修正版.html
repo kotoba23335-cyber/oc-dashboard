@@ -206,6 +206,9 @@
         .header-characters {
             display: flex;
             gap: 15px;
+            justify-content: flex-start;
+            align-items: flex-end;
+            background: transparent;
         }
 
         /* 全身イラストセクション */
@@ -244,9 +247,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 16px;
+            gap: 8px;
             animation: slideIn 0.6s ease-out forwards;
             opacity: 0;
+            width: 100px;
         }
 
         .character-card:nth-child(1) { animation-delay: 0.2s; }
@@ -292,9 +296,9 @@
 
         .character-name {
             font-weight: 800;
-            font-size: 1.1em;
+            font-size: 0.9em;
             color: #0f5461;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .costume-level {
