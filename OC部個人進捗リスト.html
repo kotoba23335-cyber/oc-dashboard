@@ -144,7 +144,7 @@
         .crown {
             font-size: 1.2em;
             position: absolute;
-            top: -20px;
+            top: -32px;
             left: 50%;
             transform: translateX(-50%);
         }
@@ -405,10 +405,6 @@
             </div>
         </div>
         <div id="content"></div>
-        <div class="character-section">
-            <h2>✨ みんなの成長ストーリー ✨</h2>
-            <div id="characterContainer" class="full-body-characters"></div>
-        </div>
     </div>
 
     <script>
@@ -678,7 +674,12 @@
             const grid = document.createElement('div');
             grid.className = 'charts-grid';
 
-            for (const [kpiName, values] of Object.entries(data)) {
+            const kpiEntries = Object.entries(data);
+            const totalKPIs = kpiEntries.length;
+            let currentIndex = 0;
+
+            for (const [kpiName, values] of kpiEntries) {
+                currentIndex++;
                 const card = document.createElement('div');
                 card.className = 'chart-card';
 
@@ -743,10 +744,71 @@
 
                 card.appendChild(barChart);
                 grid.appendChild(card);
+
+                // 最後のKPI（コメント返信率）の後にキャラクターセクションを追加
+                if (currentIndex === totalKPIs) {
+                    const characterSection = document.createElement('div');
+                    characterSection.className = 'character-section';
+
+                    const heading = document.createElement('h2');
+                    heading.textContent = '✨ みんなの成長ストーリー ✨';
+                    characterSection.appendChild(heading);
+
+                    const container = document.createElement('div');
+                    container.className = 'full-body-characters';
+                    container.id = 'characterContainer';
+
+                    const levels = calculateCharacterLevels(data);
+
+                    const levelLabels = {
+                        1: '👑 プリンセス',
+                        2: '💕 キュート',
+                        3: '⭐ スター',
+                        4: '🌟 スマイル'
+                    };
+
+                    PEOPLE.forEach(person => {
+                        const { level } = levels[person];
+                        const card = document.createElement('div');
+                        card.className = 'character-card';
+
+                        const characterContainer = document.createElement('div');
+                        characterContainer.className = 'character-container';
+
+                        const costumeSvgHtml = createCostumeSVG(level);
+                        const costumeSvgDiv = document.createElement('div');
+                        costumeSvgDiv.innerHTML = costumeSvgHtml;
+                        const costumeSvg = costumeSvgDiv.querySelector('svg');
+                        costumeSvg.classList.add('costume-svg');
+                        characterContainer.appendChild(costumeSvg);
+
+                        const faceImg = document.createElement('img');
+                        faceImg.src = MEMBER_IMAGES[person];
+                        faceImg.alt = person;
+                        faceImg.className = 'face-img';
+                        characterContainer.appendChild(faceImg);
+
+                        card.appendChild(characterContainer);
+
+                        const name = document.createElement('div');
+                        name.className = 'character-name';
+                        name.textContent = person;
+                        card.appendChild(name);
+
+                        const costumeLabel = document.createElement('div');
+                        costumeLabel.className = `costume-level level-${level}`;
+                        costumeLabel.textContent = levelLabels[level];
+                        card.appendChild(costumeLabel);
+
+                        container.appendChild(card);
+                    });
+
+                    characterSection.appendChild(container);
+                    grid.appendChild(characterSection);
+                }
             }
 
             content.appendChild(grid);
-            renderCharacterSection(data);
             updateTimestamp();
         }
 
