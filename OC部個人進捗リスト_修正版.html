@@ -804,6 +804,10 @@
 
                     characterSection.appendChild(container);
 
+                    // 既存のイラストセクションをすべて削除
+                    const existingSections = grid.querySelectorAll('.character-section');
+                    existingSections.forEach(section => section.remove());
+
                     // イラストをグリッドに追加
                     grid.appendChild(characterSection);
                 }
