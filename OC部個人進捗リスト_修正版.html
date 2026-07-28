@@ -31,6 +31,7 @@
             margin-bottom: 48px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 32px;
         }
 
@@ -201,6 +202,12 @@
             background: linear-gradient(90deg, #dc2626, #ef4444);
         }
 
+        /* ヘッダー用キャラクターセクション */
+        .header-characters {
+            display: flex;
+            gap: 15px;
+        }
+
         /* 全身イラストセクション */
         .character-section {
             background: rgba(255, 255, 255, 0.5);
@@ -249,9 +256,9 @@
 
         .character-container {
             position: relative;
-            width: 150px;
-            height: 200px;
-            margin: 0 auto 20px;
+            width: 100px;
+            height: 140px;
+            margin: 0 auto 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -743,24 +750,13 @@
                 // 最後のKPI（コメント返信率）の後にキャラクターセクションを追加
                 if (currentIndex === totalKPIs) {
                     const characterSection = document.createElement('div');
-                    characterSection.className = 'character-section';
-
-                    const heading = document.createElement('h2');
-                    heading.textContent = '✨ 王冠を集めてドレスアップ ✨';
-                    characterSection.appendChild(heading);
+                    characterSection.className = 'header-characters';
 
                     const container = document.createElement('div');
                     container.className = 'full-body-characters';
                     container.id = 'characterContainer';
 
                     const levels = calculateCharacterLevels(data);
-
-                    const levelLabels = {
-                        1: '👑 プリンセス',
-                        2: '💕 キュート',
-                        3: '⭐ スター',
-                        4: '🌟 スマイル'
-                    };
 
                     const fileNameMap = {
                         '岩田': 'iwata',
@@ -800,7 +796,12 @@
                     });
 
                     characterSection.appendChild(container);
-                    grid.appendChild(characterSection);
+
+                    // ヘッダーに追加
+                    const header = document.querySelector('.header');
+                    if (header) {
+                        header.appendChild(characterSection);
+                    }
                 }
             }
 
